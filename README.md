@@ -5,7 +5,7 @@ This script cleans up [Lightme - Logbook app](https://apps.apple.com/us/app/ligh
   - Cleans up Camera Model, removes the shortname
   - Cleans up Software
   - Cleans up Lens Model, removes the shortname
-  - Aligns Scanner/DSLR raw file names in the JSON files
+  - Infers the pattern of DSLR/Scanner raw file, then update the file names in the JSON record.
   
 This is useful beucase:
   - Adobe Lightroom use standard Camera Model and Lens Model name for calibrating purpose;
