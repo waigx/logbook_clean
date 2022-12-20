@@ -2,10 +2,10 @@
 
 This script cleans up [Lightme - Logbook app](https://apps.apple.com/us/app/lightme-logbook/) generated JSON files. It does a few things:
 
+  - Infers the pattern of DSLR/Scanner raw file, then update the file names in the JSON record;
   - Cleans up Camera Model, removes the shortname
   - Cleans up Software
   - Cleans up Lens Model, removes the shortname
-  - Infers the pattern of DSLR/Scanner raw file, then update the file names in the JSON record.
   
 This is useful beucase:
   - Adobe Lightroom use standard Camera Model and Lens Model name for calibrating purpose;
