@@ -34,6 +34,7 @@ interface LogbookFrame {
 type LogbookLog = Array<LogbookFrame>;
 
 interface FileNameInfo {
+    dirname: string;
     prefix: string;
     index: string;
     suffix: string;
@@ -53,6 +54,7 @@ async function writeNewLogsToDisk(oldFilePath: string, exifs: LogbookLog) {
         name + '_new' + ext
     );
     await Deno.writeTextFile(newFilePath, JSON.stringify(exifs));
+    return { newFilePath };
 }
 
 function trimLastParentheses(str: string): string {
@@ -123,6 +125,7 @@ function inferFilesInfo(samplePath: string): FileNameInfo {
     const extension: string = path.extname(samplePath);
     const dirname: string = path.dirname(samplePath);
     let prefix = '';
+    let suffix = '';
 
     const fileNames: string[] = [];
     for (const dirEntry of Deno.readDirSync(dirname)) {
@@ -146,16 +149,27 @@ function inferFilesInfo(samplePath: string): FileNameInfo {
         }
     }
 
+    for (const char of [...fileNames[0]].reverse()) {
+        if (fileNames.every(
+            (name: string) => name.endsWith(char + suffix)
+        )) {
+            suffix = char + suffix;
+        } else {
+            break;
+        }
+    }
+
     const baseFileName = fileNames.sort()[0];
     const baseIndex = baseFileName.slice(
         prefix.length,
-        baseFileName.length - extension.length
+        baseFileName.length - suffix.length
     );
 
     return {
-        prefix: path.join(dirname, prefix),
+        dirname,
+        prefix: path.join(dirname, '/', prefix),
         index: baseIndex,
-        suffix: extension,
+        suffix
     };
 }
 
@@ -170,13 +184,29 @@ async function main() {
 
     exifs = alignImageNumber(exifs);
 
+    const inferredfileInfo = inferFilesInfo(sampleRawFilePath);
     exifs = alignFileName(
                 exifs,
-                inferFilesInfo(sampleRawFilePath)
+                inferredfileInfo
     );
     console.log(exifs);
 
-    await writeNewLogsToDisk(jsonFilePath, exifs);
+    const { newFilePath } = await writeNewLogsToDisk(jsonFilePath, exifs);
+    console.log(`${exifs.length} photos are aligned with JSON records...`);
+    const confirmMerging = prompt('[Merge Records with Files?  (Y/N)]: ').trim();
+
+    if (new Set(['Y', 'y']).has(confirmMerging)) {
+        const exiftoolCommands = [
+            `exiftool`,
+            `-json=${newFilePath}`,
+            `${inferredfileInfo.dirname}`
+        ];
+
+        console.log(`${exiftoolCommands.join(' ')}`)
+        await Deno.run({
+            cmd: exiftoolCommands
+        }).status()
+    }
 }
 
 
